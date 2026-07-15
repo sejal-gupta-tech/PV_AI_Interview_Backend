@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.config import settings
 
 logger = logging.getLogger("uvicorn.error")
-
+#test
 class Database:
     client: AsyncIOMotorClient = None
     db = None
