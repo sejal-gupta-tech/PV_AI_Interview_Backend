@@ -56,3 +56,20 @@ class AnswerResponse(BaseModel):
     explanation: Optional[LocalizedText] = None
     next_difficulty: str
     status: str
+
+class InterviewCompleteResponse(BaseModel):
+    session_id: str
+    total_questions: int
+    attempted: int
+    correct: int
+    wrong: int
+    skipped: int
+    score: int
+    percentage: float
+    completed_at: str
+
+class MonitoringEventRequest(BaseModel):
+    event_type: str
+
+class MonitoringEventResponse(BaseModel):
+    status: str

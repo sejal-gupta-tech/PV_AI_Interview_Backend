@@ -6,10 +6,19 @@ from app.schemas.interview import (
     QuestionResponse, 
     AnswerResponse,
     LocalizedText,
-    MCQOption
+    MCQOption,
+    InterviewCompleteResponse
 )
 from app.services.question_provider import DevelopmentFallbackProvider
 from app.services.question_validation_service import QuestionValidationService
+from app.models.mongodb_models import (
+    InterviewSessionDB,
+    QuestionServedDB,
+    UserAnswerDB,
+    FinalReportDB,
+    MonitoringEventDB
+)
+from app.repositories.interview_repository import InterviewRepository
 
 _sessions: Dict[str, Dict[str, Any]] = {}
 DIFFICULTIES = ["easy", "medium", "hard"]
@@ -19,7 +28,7 @@ provider = DevelopmentFallbackProvider()
 
 class InterviewService:
     @staticmethod
-    def start_session(language: str, exam: str, subject: str, topics: List[str], difficulty: str, total_questions: int, time_per_question_seconds: int) -> InterviewStartResponse:
+    async def start_session(language: str, exam: str, subject: str, topics: List[str], difficulty: str, total_questions: int, time_per_question_seconds: int) -> InterviewStartResponse:
         session_id = str(uuid.uuid4())
         
         _sessions[session_id] = {
@@ -38,6 +47,20 @@ class InterviewService:
             "asked_question_ids": [],
             "active_question": None
         }
+        
+        now_utc = datetime.now(timezone.utc)
+        db_session = InterviewSessionDB(
+            session_id=session_id,
+            exam=exam,
+            subject=subject,
+            language=language,
+            difficulty=difficulty,
+            total_questions=total_questions,
+            time_per_question=time_per_question_seconds,
+            interview_status="started",
+            started_at=now_utc
+        )
+        await InterviewRepository.create_session(db_session)
         
         return InterviewStartResponse(
             session_id=session_id,
@@ -64,7 +87,7 @@ class InterviewService:
         # Leave difficulty unchanged
 
     @staticmethod
-    def get_question(session_id: str) -> QuestionResponse:
+    async def get_question(session_id: str) -> QuestionResponse:
         session = _sessions.get(session_id)
         if not session:
             raise ValueError("Session not found")
@@ -141,6 +164,17 @@ class InterviewService:
             "safe_question_payload": raw_question
         }
         
+        question_served = QuestionServedDB(
+            session_id=session_id,
+            question_id=raw_question["question_id"],
+            question_text=raw_question["question_text"],
+            options=raw_question["options"],
+            correct_answer=raw_question["correct_option"],
+            question_number=len(session["asked_question_ids"]),
+            timestamp=started_at
+        )
+        await InterviewRepository.save_question(question_served)
+        
         return QuestionResponse(
             question_id=raw_question["question_id"],
             question_text=raw_question["question_text"],
@@ -156,7 +190,7 @@ class InterviewService:
         )
 
     @staticmethod
-    def submit_answer(session_id: str, question_id: str, selected_option: str, answer_method: str) -> AnswerResponse:
+    async def submit_answer(session_id: str, question_id: str, selected_option: str, answer_method: str) -> AnswerResponse:
         session = _sessions.get(session_id)
         if not session:
             raise ValueError("Session not found")
@@ -173,6 +207,23 @@ class InterviewService:
         
         if now_utc > expires_at:
             InterviewService._finalize_timeout(session)
+            
+            timeout_answer = UserAnswerDB(
+                session_id=session_id,
+                question_id=question_id,
+                selected_option="",
+                correct_option=active["correct_option"],
+                is_correct=False,
+                explanation=active["explanation"],
+                time_taken=session["time_per_question_seconds"],
+                points_awarded=0,
+                answered_at=now_utc
+            )
+            await InterviewRepository.save_answer(timeout_answer)
+            
+            if session["questions_answered"] >= session["total_questions"]:
+                await InterviewService.complete_interview(session_id)
+                
             return AnswerResponse(
                 correct=False,
                 score=session["score"],
@@ -210,6 +261,24 @@ class InterviewService:
             
         session["difficulty"] = next_difficulty
         
+        time_taken = (now_utc - datetime.fromisoformat(active["started_at"])).total_seconds()
+        
+        user_answer = UserAnswerDB(
+            session_id=session_id,
+            question_id=question_id,
+            selected_option=selected_option,
+            correct_option=active["correct_option"],
+            is_correct=is_correct,
+            explanation=active["explanation"],
+            time_taken=time_taken,
+            points_awarded=10 if is_correct else 0,
+            answered_at=now_utc
+        )
+        await InterviewRepository.save_answer(user_answer)
+        
+        if session["questions_answered"] >= session["total_questions"]:
+            await InterviewService.complete_interview(session_id)
+        
         return AnswerResponse(
             correct=is_correct,
             score=session["score"],
@@ -217,3 +286,40 @@ class InterviewService:
             next_difficulty=next_difficulty,
             status="answered"
         )
+        
+    @staticmethod
+    async def complete_interview(session_id: str) -> FinalReportDB:
+        session = _sessions.get(session_id)
+        if not session:
+            raise ValueError("Session not found")
+            
+        now_utc = datetime.now(timezone.utc)
+        
+        correct = session["score"] // 10
+        wrong = session["questions_answered"] - correct
+        percentage = (session["score"] / (session["total_questions"] * 10)) * 100 if session["total_questions"] > 0 else 0
+        
+        report = FinalReportDB(
+            session_id=session_id,
+            total_questions=session["total_questions"],
+            attempted=session["questions_answered"],
+            correct=correct,
+            wrong=wrong,
+            skipped=session["total_questions"] - session["questions_answered"],
+            score=session["score"],
+            percentage=percentage,
+            completed_at=now_utc
+        )
+        await InterviewRepository.save_report(report)
+        return report
+
+    @staticmethod
+    async def save_monitoring_event(session_id: str, event_type: str) -> None:
+        now_utc = datetime.now(timezone.utc)
+        event = MonitoringEventDB(
+            session_id=session_id,
+            event_type=event_type,
+            timestamp=now_utc
+        )
+        await InterviewRepository.save_monitoring_event(event)
+
