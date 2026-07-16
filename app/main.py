@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import health, interview, speech
+from pathlib import Path
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,6 +40,15 @@ async def root():
 async def favicon():
     # Return empty to prevent 404 errors in browser
     return {}
+
+@app.get("/audio/{filename}")
+async def get_audio(filename: str):
+    base_dir = Path(__file__).resolve().parent.parent
+    file_path = base_dir / "piper" / "output" / filename
+    
+    if file_path.exists() and file_path.is_file():
+        return FileResponse(file_path, media_type="audio/wav")
+    return {"status": "error", "message": "Audio file not found."}
 
 # Include Routers
 app.include_router(health.router)
