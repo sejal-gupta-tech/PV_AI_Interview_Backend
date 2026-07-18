@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api import health, interview, speech
+from app.api import health, interview, speech, mock_interview
 from pathlib import Path
 
 @asynccontextmanager
@@ -54,3 +54,4 @@ async def get_audio(filename: str):
 app.include_router(health.router)
 app.include_router(interview.router)
 app.include_router(speech.router)
+app.include_router(mock_interview.router)
