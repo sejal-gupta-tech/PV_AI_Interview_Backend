@@ -11,7 +11,6 @@ async def generate_speech(request: SpeechGenerateRequest):
         text=request.text,
         language=request.language
     )
-
 @router.post("/piper")
 async def generate_speech_piper(request: SpeechGenerateRequest):
     try:
