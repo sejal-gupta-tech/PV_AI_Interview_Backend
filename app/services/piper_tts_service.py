@@ -18,7 +18,7 @@ class PiperTTSService:
         if language.lower() == "hindi":
             model_path = VOICES_DIR / "hi_IN-rohan-medium.onnx"
         else:
-            model_path = VOICES_DIR / "en_US-lessac-medium.onnx"
+            model_path = VOICES_DIR / "en_GB-northern_english_male-medium.onnx"
             
         filename = f"tts_{uuid.uuid4().hex}.wav"
         output_path = OUTPUT_DIR / filename
@@ -34,10 +34,10 @@ class PiperTTSService:
                 encoding="utf-8"
             )
             
-            stdout, stderr = process.communicate(input=text)
+            stdout, stderr = process.communicate(input=text + "\n")
             
-            if process.returncode != 0:
-                raise Exception(f"Piper error: {stderr}")
+            if not output_path.exists():
+                raise Exception(f"Piper failed to create output file. stdout: {stdout}, stderr: {stderr}")
                 
             return filename
         except Exception as e:

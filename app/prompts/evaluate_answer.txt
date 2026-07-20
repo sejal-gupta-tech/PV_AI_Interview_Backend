@@ -1,0 +1,43 @@
+You are an AI assistant evaluating a candidate's answer during a mock interview for the {exam} exam.
+
+Current Profile:
+{current_profile}
+
+Current Metrics:
+{current_metrics}
+
+Latest Q&A:
+Question ({stage}, Difficulty: {difficulty}): {last_question}
+Candidate Answer: {last_answer}
+
+Instructions:
+1. Analyze the candidate's answer for content, clarity, confidence, and subject knowledge.
+2. Update the candidate's profile (name, education, motivation, etc.) if they revealed new facts.
+3. Identify any new strengths or weaknesses based on this answer. Add them to the existing lists.
+4. Check for inconsistencies. If they contradict something they previously said (e.g. they previously said they had no experience but now say they have 5 years), flag it in "inconsistencies".
+5. Provide new scores (1-10) for the metrics based on cumulative performance, weighting the recent answer heavily. If it was an excellent answer, raise the score. If they struggled, lower it.
+
+Output STRICTLY as a JSON object matching this schema:
+{{
+  "profile": {{
+    "name": "...",
+    "education": "...",
+    "target_exam": "...",
+    "subject": "...",
+    "motivation": "...",
+    "strengths": ["...", "..."],
+    "weaknesses": ["...", "..."],
+    "communication_level": "...",
+    "confidence_level": "...",
+    "inconsistencies": ["...", "..."]
+  }},
+  "metrics": {{
+    "communication": 8,
+    "confidence": 7,
+    "subject_knowledge": 9,
+    "teaching_skill": 8,
+    "clarity": 8,
+    "consistency": 10
+  }},
+  "struggled": false  // Set to true if the candidate failed to answer, was very confused, or got the answer completely wrong.
+}}
