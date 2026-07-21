@@ -48,19 +48,12 @@ async def start_live_interview(request: LiveInterviewStartRequest):
         logger.info(f"First Question Generation: Generated question: {result['first_question']}")
         
         # Generate TTS for first question
-        logger.info("TTS Generation: Synthesizing first question audio...")
+        logger.info("TTS Generation: Synthesizing first question audio with Piper TTS...")
         
-        tts_provider = OpenAITTSProvider()
-        storage = LocalAudioStorage()
-        request_id = str(uuid.uuid4())
+        from app.services.piper_tts_service import PiperTTSService
+        tts_filename = PiperTTSService.generate_speech(text=result["first_question"], language=result["candidate"]["language"])
         
-        tts_stream = await tts_provider.synthesize(text=result["first_question"])
-        tts_filename = f"ai_first_{request_id}.mp3"
-        
-        logger.info(f"Audio File Saving: Saving to {tts_filename}...")
-        await storage.save(tts_stream, tts_filename, "audio/mpeg")
-        
-        result["audio_url"] = storage.get_url(tts_filename)
+        result["audio_url"] = f"/audio/{tts_filename}"
         
         logger.info(f"Final API Response: Returning active session {result['session_id']}")
         return LiveInterviewStartResponse(**result)

@@ -15,8 +15,9 @@ class CandidateProfileService:
         last_question: str, 
         last_answer: str
     ) -> dict:
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is not configured")
+        api_key = settings.GROQ_API_KEY or settings.OPENAI_API_KEY
+        if not api_key:
+            raise ValueError("GROQ_API_KEY or OPENAI_API_KEY is not configured")
             
         # We need to add evaluate_answer.txt builder to prompt_builder
         # Let's read it directly or via PromptBuilderService
@@ -31,10 +32,13 @@ class CandidateProfileService:
             last_answer=last_answer
         )
         
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        base_url = "https://api.groq.com/openai/v1" if settings.GROQ_API_KEY else None
+        client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        from app.core.voice_config import voice_settings
+        model = voice_settings.chat_model if settings.GROQ_API_KEY else "gpt-4o-mini"
         
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": prompt}

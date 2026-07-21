@@ -3,7 +3,7 @@ import uuid
 import logging
 from typing import BinaryIO
 from app.services.openai_stt_provider import OpenAISTTProvider
-from app.services.openai_tts_provider import OpenAITTSProvider
+from app.services.piper_tts_service import PiperTTSService
 from app.services.local_audio_storage import LocalAudioStorage
 from app.services.interview_engine import InterviewEngineService
 from app.services.response_builder import ResponseBuilder
@@ -24,7 +24,7 @@ class VoiceOrchestrator:
         
         storage = LocalAudioStorage()
         stt_provider = OpenAISTTProvider()
-        tts_provider = OpenAITTSProvider()
+        # tts_provider removed
         
         try:
             # 1. Validation & Storage
@@ -33,6 +33,7 @@ class VoiceOrchestrator:
             
             # (Basic validation done. More can be added like size limits)
             candidate_metadata = await storage.save(audio_stream, f"candidate_{request_id}_{filename}", mime_type)
+            audio_stream.seek(0) # Reset file pointer for STT
 
             # 2. STT
             stt_start = time.time()
@@ -62,9 +63,9 @@ class VoiceOrchestrator:
                 fallback_msg = "I couldn't hear you clearly. Could you please repeat your answer?"
                 
                 tts_start = time.time()
-                tts_stream = await tts_provider.synthesize(text=fallback_msg)
-                tts_filename = f"ai_fallback_{request_id}.mp3"
-                await storage.save(tts_stream, tts_filename, "audio/mpeg")
+                
+                lang = session.get("candidate", {}).get("language", "English") if session else "English"
+                tts_filename = PiperTTSService.generate_speech(text=fallback_msg, language=lang)
                 tts_ms = int((time.time() - tts_start) * 1000)
                 
                 return ResponseBuilder.build_voice_state(
@@ -72,7 +73,7 @@ class VoiceOrchestrator:
                     session_id=session_id,
                     transcript="",
                     next_question=fallback_msg,
-                    audio_url=storage.get_url(tts_filename),
+                    audio_url=f"/audio/{tts_filename}",
                     metrics=session.get("metrics", {}),
                     profile=session.get("profile", {}),
                     voice_state=VoiceState.WAITING_FOR_CANDIDATE,
@@ -101,9 +102,16 @@ class VoiceOrchestrator:
 
             # 4. TTS
             tts_start = time.time()
-            tts_stream = await tts_provider.synthesize(text=next_question)
-            tts_filename = f"ai_{request_id}.mp3"
-            ai_metadata = await storage.save(tts_stream, tts_filename, "audio/mpeg")
+            
+            # Fetch session again just in case, or we can get language from engine_result
+            # Actually session is fetched above, let's reuse
+            lang = "English"
+            if "session" not in locals() or not session:
+                session = await db["live_interview_sessions"].find_one({"session_id": session_id})
+            if session:
+                lang = session.get("candidate", {}).get("language", "English")
+                
+            tts_filename = PiperTTSService.generate_speech(text=next_question, language=lang)
             tts_ms = int((time.time() - tts_start) * 1000)
             logger.info(f"[{request_id}] TTS finished in {tts_ms}ms")
 
@@ -122,7 +130,7 @@ class VoiceOrchestrator:
                 session_id=session_id,
                 transcript=transcript,
                 next_question=next_question,
-                audio_url=storage.get_url(tts_filename),
+                audio_url=f"/audio/{tts_filename}",
                 metrics=engine_result.get("metrics").model_dump(),
                 profile=engine_result.get("candidate_profile").model_dump(),
                 voice_state=VoiceState.WAITING_FOR_CANDIDATE,

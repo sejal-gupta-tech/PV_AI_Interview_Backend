@@ -10,10 +10,12 @@ import aiofiles
 
 class OpenAISTTProvider(BaseSTTProvider):
     async def transcribe(self, audio_stream: BinaryIO, filename: str) -> dict:
-        if not settings.OPENAI_API_KEY:
-            raise ValueError(StructuredError(code="CONFIG_ERROR", message="OpenAI API key missing", retry=False).model_dump_json())
+        api_key = settings.GROQ_API_KEY or settings.OPENAI_API_KEY
+        if not api_key:
+            raise ValueError(StructuredError(code="CONFIG_ERROR", message="GROQ_API_KEY or OpenAI API key missing", retry=False).model_dump_json())
             
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        base_url = "https://api.groq.com/openai/v1" if settings.GROQ_API_KEY else None
+        client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         
         # Whisper requires a file object with a name attribute, or a path.
         # We write it to a temp file first.
