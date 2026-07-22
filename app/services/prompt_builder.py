@@ -42,7 +42,7 @@ class PromptBuilderService:
             difficulty=difficulty,
             stage=stage,
             language=language,
-            memory=memory_str,
+            profile=memory_str,
             conversation_history=history_str.strip()
         )
 

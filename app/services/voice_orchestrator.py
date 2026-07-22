@@ -142,5 +142,6 @@ class VoiceOrchestrator:
             logger.error(f"[{request_id}] ValueError: {str(e)}")
             return ResponseBuilder.build_error(request_id, session_id, "VALIDATION_ERROR", str(e))
         except Exception as e:
-            logger.error(f"[{request_id}] Unexpected Error: {str(e)}")
-            return ResponseBuilder.build_error(request_id, session_id, "INTERNAL_ERROR", "An unexpected error occurred.")
+            import traceback
+            logger.error(f"[{request_id}] Unexpected Error: {traceback.format_exc()}")
+            return ResponseBuilder.build_error(request_id, session_id, "INTERNAL_ERROR", f"Error: {str(e)}")
