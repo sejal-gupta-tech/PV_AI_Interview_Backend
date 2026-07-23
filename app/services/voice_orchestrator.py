@@ -11,9 +11,9 @@ from app.schemas.live_interview import ProcessingMetrics
 from app.schemas.speech import VoiceState, StructuredError
 from app.core.voice_config import voice_settings
 from app.core.database import get_db
+from app.core.logging import setup_logger
 
-logger = logging.getLogger("voice_pipeline")
-logger.setLevel(logging.INFO)
+logger = setup_logger("voice_pipeline")
 
 class VoiceOrchestrator:
     @staticmethod
@@ -27,11 +27,10 @@ class VoiceOrchestrator:
         # tts_provider removed
         
         try:
-            # 1. Validation & Storage
+            # 1. Validation & Storage (Audio Recording)
             if not filename or not audio_stream:
-                raise ValueError("Audio missing")
+                raise ValueError("Audio stream missing. Audio Recording stage failed.")
             
-            # (Basic validation done. More can be added like size limits)
             candidate_metadata = await storage.save(audio_stream, f"candidate_{request_id}_{filename}", mime_type)
             audio_stream.seek(0) # Reset file pointer for STT
 
@@ -39,7 +38,6 @@ class VoiceOrchestrator:
             stt_start = time.time()
             stt_result = await stt_provider.transcribe(audio_stream, filename)
             stt_ms = int((time.time() - stt_start) * 1000)
-            logger.info(f"[{request_id}] STT finished in {stt_ms}ms")
             
             transcript = stt_result.get("transcript", "")
             confidence = stt_result.get("confidence", 0.0)
@@ -63,9 +61,9 @@ class VoiceOrchestrator:
                 fallback_msg = "I couldn't hear you clearly. Could you please repeat your answer?"
                 
                 tts_start = time.time()
-                
-                lang = session.get("candidate", {}).get("language", "English") if session else "English"
-                tts_filename = PiperTTSService.generate_speech(text=fallback_msg, language=lang)
+                lang = session.get("language", "English") if session else "English"
+                tts_result = PiperTTSService.generate_speech(text=fallback_msg, language=lang)
+                tts_filename = tts_result["filename"]
                 tts_ms = int((time.time() - tts_start) * 1000)
                 
                 return ResponseBuilder.build_voice_state(
@@ -93,27 +91,19 @@ class VoiceOrchestrator:
             engine_result = await InterviewEngineService.process_answer(
                 session_id=session_id, 
                 answer_text=transcript, 
-                timing=None # Timings can be enriched further
+                timing=None
             )
             interview_ms = int((time.time() - engine_start) * 1000)
-            logger.info(f"[{request_id}] Interview Engine finished in {interview_ms}ms")
-            
             next_question = engine_result.get("next_question", "")
 
             # 4. TTS
             tts_start = time.time()
-            
-            # Fetch session again just in case, or we can get language from engine_result
-            # Actually session is fetched above, let's reuse
-            lang = "English"
-            if "session" not in locals() or not session:
-                session = await db["live_interview_sessions"].find_one({"session_id": session_id})
-            if session:
-                lang = session.get("candidate", {}).get("language", "English")
+            session = await db["live_interview_sessions"].find_one({"session_id": session_id})
+            lang = session.get("language", "English") if session else "English"
                 
-            tts_filename = PiperTTSService.generate_speech(text=next_question, language=lang)
+            tts_result = PiperTTSService.generate_speech(text=next_question, language=lang)
+            tts_filename = tts_result["filename"]
             tts_ms = int((time.time() - tts_start) * 1000)
-            logger.info(f"[{request_id}] TTS finished in {tts_ms}ms")
 
             total_ms = int((time.time() - start_time) * 1000)
             
@@ -124,17 +114,44 @@ class VoiceOrchestrator:
                 total_ms=total_ms
             )
             
+            question_number = engine_result.get("conversation_length", 1)
+            audio_url = f"/audio/{tts_filename}"
+            has_question = "YES" if next_question else "NO"
+            
+            # Use structured JSON logging
+            logger.info(
+                "Interview pipeline execution completed",
+                extra={
+                    "structured_data": {
+                        "Session ID": session_id,
+                        "Candidate ID": request_id,
+                        "Question Number": question_number,
+                        "Interview Language": lang,
+                        "Prompt Language": lang,
+                        "Question": next_question,
+                        "Transcript": transcript,
+                        "Evaluation": engine_result.get("metrics").model_dump(),
+                        "Voice Model": "Piper",
+                        "Generated Audio": tts_filename,
+                        "Audio URL": audio_url,
+                        "LLM Response Time": interview_ms,
+                        "Piper Time": tts_ms,
+                        "Total Processing Time": total_ms
+                    }
+                }
+            )
+            
             # 5. Response Builder
             return ResponseBuilder.build_voice_state(
                 request_id=request_id,
                 session_id=session_id,
                 transcript=transcript,
                 next_question=next_question,
-                audio_url=f"/audio/{tts_filename}",
+                audio_url=audio_url,
                 metrics=engine_result.get("metrics").model_dump(),
                 profile=engine_result.get("candidate_profile").model_dump(),
                 voice_state=VoiceState.WAITING_FOR_CANDIDATE,
-                turn=engine_result.get("conversation_length", 1),
+                turn=question_number,
                 processing=processing
             )
             

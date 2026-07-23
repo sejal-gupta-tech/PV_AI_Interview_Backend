@@ -24,6 +24,7 @@ Instructions:
 4. INSTEAD of switching topics immediately, drill deeper. Use questions like "Why?", "Can you share an example?", or "How would you handle a specific edge case?" based on what they just said.
 5. Adapt to the Target Difficulty. If difficulty is "Advanced" or "Scenario-Based", present a complex situation.
 6. Do not repeat previous questions. Keep it conversational and professional.
+7. CRITICAL INSTRUCTION: You MUST generate your 'question' and 'follow_up_reason' in the {language} language. If {language} is Hindi, write the response using Devanagari script.
 
 Format your output STRICTLY as a JSON object with the following schema:
 {{

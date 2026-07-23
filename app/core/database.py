@@ -48,6 +48,18 @@ async def create_indexes(db):
 
         # Monitoring events collection
         await db["monitoring_events"].create_index("session_id")
+        
+        # Question Bank collection
+        await db["question_bank"].create_index("questionHash", unique=True)
+        await db["question_bank"].create_index("exam")
+        await db["question_bank"].create_index("subject")
+        await db["question_bank"].create_index("topic")
+        await db["question_bank"].create_index("difficulty")
+        await db["question_bank"].create_index("language")
+        
+        # Question Generation Jobs collection
+        await db["question_generation_jobs"].create_index("job_id", unique=True)
+        
         logger.info("MongoDB indexes created successfully.")
     except Exception as e:
         logger.error(f"Error creating MongoDB indexes: {e}")

@@ -1,0 +1,10 @@
+{
+  "KVS PRT": {
+    "General English": {
+      "topics": ["Grammar", "Vocabulary", "Reading Comprehension"]
+    },
+    "General Hindi": {
+      "topics": ["Vyakaran", "Shabdavali", "Gadyansh"]
+    }
+  }
+}

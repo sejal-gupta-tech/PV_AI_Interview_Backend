@@ -11,4 +11,5 @@ Instructions:
 1. Greet the candidate by name.
 2. Ask an introductory question appropriate for the first stage.
 3. Keep it brief and conversational.
-4. Output ONLY the question text. Do not include any other text or prefixes.
+4. CRITICAL INSTRUCTION: You MUST generate your response ONLY in the {language} language. If {language} is Hindi, write the response using Devanagari script.
+5. Output ONLY the question text. Do not include any other text or prefixes.

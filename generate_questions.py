@@ -132,6 +132,34 @@ SUBJECT_MAPPING = {
     "Sociology",
     "Psychology",
     "Home Science"
+  ],
+  "KVS/NVS Special Educator": [
+    "Child Development & Pedagogy",
+    "Inclusive Education",
+    "Special Education",
+    "Educational Psychology",
+    "Learning Disabilities",
+    "Intellectual Disability",
+    "Hearing Impairment",
+    "Visual Impairment",
+    "Autism Spectrum Disorder (ASD)",
+    "Multiple Disabilities",
+    "Assessment & Identification",
+    "Individualized Education Programme (IEP)",
+    "Teaching Methods for Children with Special Needs",
+    "Assistive Technology",
+    "Behaviour Management",
+    "Guidance & Counselling",
+    "Communication Skills",
+    "Indian Education Policies",
+    "RPWD Act 2016",
+    "National Education Policy (NEP 2020)",
+    "RCI Act",
+    "KVS/NVS Special Educator Pedagogy",
+    "General English",
+    "General Hindi",
+    "General Awareness",
+    "Reasoning Ability"
   ]
 }
 

@@ -38,6 +38,7 @@ class LiveInterviewStartRequest(BaseModel):
     difficulty: str = "Medium"
     interview_mode: str = "Voice"
     duration: int = 20
+    focus: str = "Subject Knowledge"
 
 class LiveInterviewStartResponse(BaseModel):
     session_id: str
@@ -61,6 +62,7 @@ class LiveInterviewAnswerResponse(BaseModel):
     candidate_profile: CandidateProfile
     metrics: InterviewMetrics
     conversation_length: int
+    audio_url: Optional[str] = None
 
 from app.schemas.speech import AudioMetadata, VoiceState, StructuredError
 
@@ -107,6 +109,7 @@ class LiveInterviewSessionDB(BaseModel):
     current_difficulty: str
     interview_mode: str
     duration: int
+    focus: str = "Subject Knowledge"
     current_stage: str
     status: str = "active"
     retries: int = 0
@@ -114,3 +117,70 @@ class LiveInterviewSessionDB(BaseModel):
     metrics: InterviewMetrics = Field(default_factory=InterviewMetrics)
     conversation: List[ConversationTurn] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class GenerateQuestionRequest(BaseModel):
+    exam: str = Field(..., description="Name of the exam")
+    subject: str = Field(..., description="Subject for the question")
+    difficulty: str = Field(..., description="Difficulty level (e.g., Easy, Medium, Hard)")
+    language: str = Field(..., description="Language for the question (e.g., English, Hindi)")
+    question_number: int = Field(1, description="The current question number in the interview sequence")
+
+class GenerateQuestionResponse(BaseModel):
+    question: str = Field(..., description="The generated interview question")
+    audio_url: Optional[str] = Field(None, description="The URL of the generated audio file")
+    question_number: int = Field(..., description="The current question number")
+    voice_supported: Optional[bool] = None
+    voice: Optional[str] = None
+    language: Optional[str] = None
+
+class EvaluateAnswerRequest(BaseModel):
+    interview_id: str
+    question_number: int
+    question: str
+    candidate_answer: str
+    exam: str
+    subject: str
+    difficulty: str
+    language: str
+
+class EvaluateAnswerResponse(BaseModel):
+    score: int
+    technical_accuracy: int
+    communication: int
+    strengths: List[str]
+    weaknesses: List[str]
+    feedback: str
+    follow_up_required: bool
+    follow_up_question: Optional[str] = None
+    follow_up_audio_url: Optional[str] = None
+    voice_supported: Optional[bool] = None
+    voice: Optional[str] = None
+    language: Optional[str] = None
+
+class LiveInterviewChatRequest(BaseModel):
+    interview_id: str
+    candidate_message: str
+    exam: str
+    subject: str
+    language: str = "English"
+    experience_level: str = "Entry Level"
+    conversation_history: List[Dict[str, str]] = []
+
+class AvatarBehavior(BaseModel):
+    emotion: str = "neutral"
+    animation: str = "idle"
+    gesture: str = "none"
+    head_direction: str = "candidate"
+    eye_contact: bool = True
+    posture: str = "professional"
+    speaking_speed: str = "normal"
+
+class LiveInterviewChatResponse(BaseModel):
+    stage: str
+    interviewer_message: str
+    next_action: str
+    avatar: AvatarBehavior = Field(default_factory=AvatarBehavior)
+    audio_url: Optional[str] = None
+    voice_supported: Optional[bool] = None
+    voice: Optional[str] = None
+    language: Optional[str] = None

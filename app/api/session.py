@@ -34,7 +34,11 @@ async def start_live_interview(request: LiveInterviewStartRequest):
         if missing_fields:
             logger.warning(f"Frontend is missing the following fields in /start request: {', '.join(missing_fields)}")
             
-        logger.info(f"Session Creation: Starting session for {request.candidate_name or 'Unknown'}")
+        logger.info("[Verification] 🚀 Interview Started")
+        logger.info(f"[Verification] 📝 Selected Exam : {request.exam or 'Unknown'}")
+        logger.info(f"[Verification] 📚 Selected Subject : {request.subject or 'Unknown'}")
+        logger.info(f"[Verification] 🗣️ Interview Language : {request.language or 'English'}")
+        
         result = await InterviewEngineService.start_session(
             candidate_name=request.candidate_name or "Unknown",
             candidate_email=request.candidate_email,
@@ -45,17 +49,20 @@ async def start_live_interview(request: LiveInterviewStartRequest):
             interview_mode=request.interview_mode or "Voice",
             duration=request.duration or 20
         )
-        logger.info(f"First Question Generation: Generated question: {result['first_question']}")
+        logger.info(f"[Verification] 💬 Generated Question : {result['first_question']}")
         
         # Generate TTS for first question
         logger.info("TTS Generation: Synthesizing first question audio with Piper TTS...")
         
         from app.services.piper_tts_service import PiperTTSService
-        tts_filename = PiperTTSService.generate_speech(text=result["first_question"], language=result["candidate"]["language"])
+        tts_result = PiperTTSService.generate_speech(text=result["first_question"], language=result["candidate"]["language"])
+        tts_filename = tts_result["filename"]
+        
+        logger.info(f"[Verification] 🔊 Generated WAV : {tts_filename}")
         
         result["audio_url"] = f"/audio/{tts_filename}"
+        logger.info(f"[Verification] 📤 Returned audio_url : {result['audio_url']}")
         
-        logger.info(f"Final API Response: Returning active session {result['session_id']}")
         return LiveInterviewStartResponse(**result)
     except Exception as e:
         error_msg = str(e)
@@ -75,6 +82,17 @@ async def submit_live_answer(request: LiveInterviewAnswerRequest):
             answer_text=request.answer_text,
             timing=request.timing
         )
+        
+        # Generate TTS for the next question
+        db = get_db()
+        session = await db["live_interview_sessions"].find_one({"session_id": request.session_id})
+        lang = session.get("language", "English") if session else "English"
+        
+        from app.services.piper_tts_service import PiperTTSService
+        tts_result = PiperTTSService.generate_speech(text=result["next_question"], language=lang)
+        tts_filename = tts_result["filename"]
+        result["audio_url"] = f"/audio/{tts_filename}"
+        
         return LiveInterviewAnswerResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -18,7 +18,19 @@ SUBJECT_MAPPING = {
   "KVS PGT": ["Common Subjects", "Physics", "Chemistry", "Biology", "Mathematics", "English", "Hindi", "Commerce", "Economics", "History", "Geography", "Political Science", "Computer Science", "Sociology", "Psychology", "Home Science"],
   "NVS PRT": ["English", "Hindi", "Reasoning", "Quantitative Aptitude", "Computer", "General Knowledge", "Current Affairs", "Child Development & Pedagogy (CDP)", "Teaching Aptitude", "Environmental Studies (EVS)", "Mathematics", "English Pedagogy", "Hindi Pedagogy"],
   "NVS TGT": ["Common Subjects", "English", "Hindi", "Mathematics", "Science", "Social Science", "Sanskrit", "Computer Science", "Art Education", "Physical Education", "Music"],
-  "NVS PGT": ["Common Subjects", "Physics", "Chemistry", "Biology", "Mathematics", "English", "Hindi", "Commerce", "Economics", "History", "Geography", "Political Science", "Computer Science", "Sociology", "Psychology", "Home Science"]
+  "NVS PGT": ["Common Subjects", "Physics", "Chemistry", "Biology", "Mathematics", "English", "Hindi", "Commerce", "Economics", "History", "Geography", "Political Science", "Computer Science", "Sociology", "Psychology", "Home Science"],
+  "KVS/NVS Special Educator": [
+    "Child Development & Pedagogy", "Inclusive Education", "Special Education", 
+    "Educational Psychology", "Learning Disabilities", "Intellectual Disability", 
+    "Hearing Impairment", "Visual Impairment", "Autism Spectrum Disorder (ASD)", 
+    "Multiple Disabilities", "Assessment & Identification", 
+    "Individualized Education Programme (IEP)", 
+    "Teaching Methods for Children with Special Needs", "Assistive Technology", 
+    "Behaviour Management", "Guidance & Counselling", "Communication Skills", 
+    "Indian Education Policies", "RPWD Act 2016", "National Education Policy (NEP 2020)", 
+    "RCI Act", "KVS/NVS Special Educator Pedagogy", "General English", 
+    "General Hindi", "General Awareness", "Reasoning Ability"
+  ]
 }
 
 def sanitize_for_path(s: str) -> str:

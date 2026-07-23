@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api import health, interview, speech, mock_interview, session
+from app.api import health, interview, speech, mock_interview, session, question_bank, live_interview
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 
@@ -36,7 +36,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,6 +45,11 @@ app.add_middleware(
 media_dir = Path(__file__).resolve().parent.parent / "media"
 media_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=str(media_dir)), name="media")
+
+# Mount uploads directory for TTS audio serving
+uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 @app.get("/", include_in_schema=False)
 async def root():
@@ -71,3 +76,5 @@ app.include_router(interview.router)
 app.include_router(speech.router)
 app.include_router(mock_interview.router)
 app.include_router(session.router)
+app.include_router(question_bank.router)
+app.include_router(live_interview.router)

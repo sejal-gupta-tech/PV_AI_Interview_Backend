@@ -1,0 +1,101 @@
+{
+  "SSC CGL": {
+    "General Awareness": {
+      "topics": [
+        "Ancient History",
+        "Medieval History",
+        "Modern History",
+        "Indian National Movement",
+        "Indian Polity",
+        "Constitution",
+        "Geography of India",
+        "World Geography",
+        "Economics",
+        "Indian Economy",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Environment",
+        "Computer Awareness",
+        "Art & Culture",
+        "Current Affairs",
+        "Static GK",
+        "Important Days",
+        "Books & Authors",
+        "Awards",
+        "Sports",
+        "Government Schemes"
+      ]
+    },
+    "General Intelligence & Reasoning": {
+      "topics": [
+        "Analogy",
+        "Classification",
+        "Coding-Decoding",
+        "Blood Relation",
+        "Direction Sense",
+        "Number Series",
+        "Alphabet Series",
+        "Missing Number",
+        "Matrix",
+        "Ranking",
+        "Seating Arrangement",
+        "Puzzle",
+        "Mirror Image",
+        "Water Image",
+        "Paper Folding",
+        "Cube & Dice",
+        "Embedded Figure",
+        "Statement & Conclusion",
+        "Syllogism",
+        "Venn Diagram",
+        "Non-Verbal Reasoning"
+      ]
+    },
+    "Quantitative Aptitude": {
+      "topics": [
+        "Number System",
+        "Simplification",
+        "LCM & HCF",
+        "Percentage",
+        "Ratio & Proportion",
+        "Average",
+        "Profit & Loss",
+        "Discount",
+        "Simple Interest",
+        "Compound Interest",
+        "Time & Work",
+        "Pipes & Cistern",
+        "Time Speed Distance",
+        "Boat & Stream",
+        "Partnership",
+        "Mixture & Alligation",
+        "Algebra",
+        "Geometry",
+        "Mensuration",
+        "Trigonometry",
+        "Statistics",
+        "Data Interpretation"
+      ]
+    },
+    "English Language": {
+      "topics": [
+        "Grammar",
+        "Vocabulary",
+        "Synonyms",
+        "Antonyms",
+        "One Word Substitution",
+        "Idioms & Phrases",
+        "Active Passive Voice",
+        "Direct & Indirect Speech",
+        "Error Spotting",
+        "Sentence Improvement",
+        "Cloze Test",
+        "Reading Comprehension",
+        "Fill in the Blanks",
+        "Para Jumbles",
+        "Spellings"
+      ]
+    }
+  }
+}

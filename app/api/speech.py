@@ -59,14 +59,16 @@ async def generate_speech(request: SpeechGenerateRequest):
 @router.post("/piper")
 async def generate_speech_piper(request: SpeechGenerateRequest):
     try:
-        filename = PiperTTSService.generate_speech(
+        tts_result = PiperTTSService.generate_speech(
             text=request.text, 
             language=request.language
         )
+        filename = tts_result["filename"]
         return {
             "status": "success",
             "filename": filename,
-            "audio_url": f"/audio/{filename}"
+            "audio_url": f"/audio/{filename}",
+            "metadata": tts_result
         }
     except Exception as e:
         return {
