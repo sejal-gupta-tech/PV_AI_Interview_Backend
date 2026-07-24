@@ -1,4 +1,5 @@
 import uuid
+from app.core.database import get_db
 from app.schemas.live_interview import LiveInterviewSessionDB, ConversationTurn, CandidateProfile, InterviewMetrics, TimingMetadata
 from app.services.session_manager import SessionManagerService
 from app.services.candidate_profile_service import CandidateProfileService
